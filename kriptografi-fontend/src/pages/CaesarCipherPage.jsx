@@ -50,6 +50,25 @@ export default function CaesarCipherPage() {
       });
   };
 
+  const handleDecrypt = () => {
+    const formData = new FormData();
+    formData.append("file", file); // Attach the encrypted image file
+
+    // Call the backend to decrypt the hidden message from the LSB encoded image
+    axios
+      .post("xxxxxxxxxxx", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+      .then((response) => {
+        setPlaintext(response.data.plaintext); // Assuming the API returns the decrypted plaintext
+      })
+      .catch((error) => {
+        console.error("There was an error decrypting the data!", error);
+      });
+  };
+
   // Reset all fields
   const handleReset = () => {
     setPlaintext("");
@@ -64,41 +83,27 @@ export default function CaesarCipherPage() {
     <div className="font-poppins bg-gray-100 min-h-screen flex justify-center items-center py-10">
       <div className="bg-white w-full max-w-4xl p-8 rounded-lg shadow-2xl">
         <h1 className="text-center text-3xl font-bold text-[#001E56] mb-6">
-          CAESAR CIPHER & LSB STEGANOGRAPHY
+          LSB STEGANOGRAPHY - Encrypt & Decrypt
         </h1>
-
         <div className="space-y-8">
-          {/* Plaintext input */}
-          <div className="flex items-center justify-between">
-            <label className="text-lg font-semibold w-full sm:w-1/3">
-              Plaintext
-            </label>
-            <input
-              type="text"
-              className="w-full sm:w-2/3 border-2 border-gray-400 rounded-md p-3"
-              value={plaintext}
-              onChange={(e) => setPlaintext(e.target.value)}
-              disabled={!usePlaintext} // Disable input if option is not selected
-            />
-          </div>
-
-          {/* File Upload */}
-          <div className="flex items-center justify-between">
-            <label className="text-lg font-semibold w-full sm:w-1/3">
-              Upload Image
-            </label>
-            <div className="w-full sm:w-2/3 border-2 border-gray-400 rounded-md p-3">
+          {/* Conditionally render Plaintext input */}
+          {usePlaintext && (
+            <div className="flex items-center justify-between">
+              <label className="text-lg font-semibold w-full sm:w-1/3">
+                Plaintext
+              </label>
               <input
-                type="file"
-                className="w-full h-10 text-sm border-none"
-                onChange={handleFileChange}
+                type="text"
+                className="w-full sm:w-2/3 border-2 border-gray-400 rounded-md p-3"
+                value={plaintext}
+                onChange={(e) => setPlaintext(e.target.value)}
               />
             </div>
-          </div>
+          )}
 
-          {/* Option to Include Plaintext or not */}
+          {/* Plaintext input */}
           <div className="flex items-center space-x-4 mt-6">
-            <label className="text-lg font-semibold">Include Plaintext?</label>
+            <label className="text-lg font-semibold">Masukkan Plaintext?</label>
             <div className="flex items-center">
               <input
                 type="radio"
@@ -121,16 +126,35 @@ export default function CaesarCipherPage() {
             </div>
           </div>
 
+          {/* File Upload */}
+          <div className="flex items-center justify-between">
+            <label className="text-lg font-semibold w-full sm:w-1/3">
+              Upload Image
+            </label>
+            <div className="w-full sm:w-2/3 border-2 border-gray-400 rounded-md p-3">
+              <input
+                type="file"
+                className="w-full h-10 text-sm border-none"
+                onChange={handleFileChange}
+              />
+            </div>
+          </div>
+
           {/* Action buttons */}
-          <div className="flex justify-between mt-6">
+          <div className="flex flex-col sm:flex-row gap-4 mt-6">
             <button
               onClick={handleEncrypt}
               className="bg-[#001E56] text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-300 w-full sm:w-auto">
               Enkripsi
             </button>
             <button
+              onClick={handleDecrypt}
+              className="bg-[#4CAF50] text-white px-6 py-2 rounded-lg hover:bg-green-600 transition duration-300 w-full sm:w-auto mt-4 sm:mt-0">
+              Deskripsi
+            </button>
+            <button
               onClick={handleReset}
-              className="bg-yellow-500 text-black px-6 py-2 rounded-lg hover:bg-yellow-400 transition duration-300 w-full sm:w-auto mt-4 sm:mt-0">
+              className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-800 transition duration-300 w-full sm:w-auto mt-4 sm:mt-0">
               Reset
             </button>
           </div>

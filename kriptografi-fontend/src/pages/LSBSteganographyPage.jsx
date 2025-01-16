@@ -3,11 +3,12 @@ import axios from "axios";
 
 export default function LSBSteganographyPage() {
   const [plaintext, setPlaintext] = useState("");
-  const [ciphertextImage, setCiphertextImage] = useState(null); // To hold the encrypted image
+  const [ciphertextImage, setCiphertextImage] = useState(null);
   const [file, setFile] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [imagePreview, setImagePreview] = useState(null);
   const [fileDetails, setFileDetails] = useState(null);
-  const [usePlaintext, setUsePlaintext] = useState(true); // Default to using plaintext
+  const [usePlaintext, setUsePlaintext] = useState(true);
 
   // Handle file selection and preview
   const handleFileChange = (e) => {
@@ -89,37 +90,24 @@ export default function LSBSteganographyPage() {
         </h1>
 
         <div className="space-y-8">
-          {/* Plaintext input */}
-          <div className="flex items-center justify-between">
-            <label className="text-lg font-semibold w-full sm:w-1/3">
-              Plaintext
-            </label>
-            <input
-              type="text"
-              className="w-full sm:w-2/3 border-2 border-gray-400 rounded-md p-3"
-              value={plaintext}
-              onChange={(e) => setPlaintext(e.target.value)}
-              disabled={!usePlaintext} // Disable input if option is not selected
-            />
-          </div>
-
-          {/* File Upload */}
-          <div className="flex items-center justify-between">
-            <label className="text-lg font-semibold w-full sm:w-1/3">
-              Upload Image
-            </label>
-            <div className="w-full sm:w-2/3 border-2 border-gray-400 rounded-md p-3">
+          {/* Conditionally render Plaintext input */}
+          {usePlaintext && (
+            <div className="flex items-center justify-between">
+              <label className="text-lg font-semibold w-full sm:w-1/3">
+                Plaintext
+              </label>
               <input
-                type="file"
-                className="w-full h-10 text-sm border-none"
-                onChange={handleFileChange}
+                type="text"
+                className="w-full sm:w-2/3 border-2 border-gray-400 rounded-md p-3"
+                value={plaintext}
+                onChange={(e) => setPlaintext(e.target.value)}
               />
             </div>
-          </div>
+          )}
 
-          {/* Option to Include Plaintext or not */}
+          {/* Plaintext input */}
           <div className="flex items-center space-x-4 mt-6">
-            <label className="text-lg font-semibold">Include Plaintext?</label>
+            <label className="text-lg font-semibold">Masukkan Plaintext?</label>
             <div className="flex items-center">
               <input
                 type="radio"
@@ -142,8 +130,22 @@ export default function LSBSteganographyPage() {
             </div>
           </div>
 
+          {/* File Upload */}
+          <div className="flex items-center justify-between">
+            <label className="text-lg font-semibold w-full sm:w-1/3">
+              Upload Image
+            </label>
+            <div className="w-full sm:w-2/3 border-2 border-gray-400 rounded-md p-3">
+              <input
+                type="file"
+                className="w-full h-10 text-sm border-none"
+                onChange={handleFileChange}
+              />
+            </div>
+          </div>
+
           {/* Action buttons */}
-          <div className="flex justify-between mt-6">
+          <div className="flex justify-between sm:flex-row gap-3 mt-6">
             <button
               onClick={handleEncrypt}
               className="bg-[#001E56] text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-300 w-full sm:w-auto">
@@ -156,7 +158,7 @@ export default function LSBSteganographyPage() {
             </button>
             <button
               onClick={handleReset}
-              className="bg-yellow-500 text-black px-6 py-2 rounded-lg hover:bg-yellow-400 transition duration-300 w-full sm:w-auto mt-4 sm:mt-0">
+              className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-800 transition duration-300 w-full sm:w-auto mt-4 sm:mt-0">
               Reset
             </button>
           </div>

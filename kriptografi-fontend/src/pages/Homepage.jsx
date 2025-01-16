@@ -4,7 +4,7 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate("/caesar-cipher"); // Arahkan ke halaman /another-page
+    navigate("/caesar-cipher");
   };
   return (
     <>
