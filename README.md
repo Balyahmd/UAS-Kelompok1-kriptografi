@@ -9,7 +9,7 @@ Caesar Cipher diputar 7 kali + Steganografi LSB
 | Rangga Krisna Putra | 21104410068 | Back-End/Leader |
 | Nugroho Gusti Bintang Fajar | 21104410035 | Back-End |
 | Balya Ahmad Waffa | 21104410052 | Front-End |
-| Rangga Krisna Putra | 21104410075 | Front-End / UI-UX |
+| Eza Rafli Vernica Saputra | 21104410075 | Front-End / UI-UX |
 
 [Back-End Link](https://github.com/ranggakrisnaa/backend-cryptography-final)
 
