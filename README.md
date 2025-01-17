@@ -2,9 +2,18 @@
 
 Algoritma Kriptografi
 Caesar Cipher diputar 7 kali + Steganografi LSB
-Nama Anggota Kewlompok
-1. Rangga Krisna Putra
-2. Bintang
-3. Balya Ahmad Waffa
-4. M. Eza Rafli
-npm create vite@late
+
+#### Anggota Kelompok
+| Nama                | NIM      | Role        |
+| :--------           | :------- | :---------- |
+| Rangga Krisna Putra | 21104410068 | Back-End/Leader |
+| Nugroho Gusti Bintang Fajar | 21104410035 | Back-End |
+| Balya Ahmad Waffa | 21104410052 | Front-End |
+| Eza Rafli Vernica Saputra | 21104410075 | Front-End / UI-UX |
+
+[Back-End Link](https://github.com/ranggakrisnaa/backend-cryptography-final)
+
+
+
+
+
