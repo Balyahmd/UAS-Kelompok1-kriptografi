@@ -1,216 +1,306 @@
 import { useState } from "react";
-import axios from "axios";
+
+// Helper Functions
+const stringToBinary = (str) =>
+  str
+    .split("")
+    .map((char) => char.charCodeAt(0).toString(2).padStart(8, "0"))
+    .join("");
+
+const binaryToString = (binary) =>
+  binary
+    .match(/.{8}/g)
+    .map((byte) => String.fromCharCode(parseInt(byte, 2)))
+    .join("");
+
+// LSB Encryption Function
+const encryptImage = (image, message) => {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = image.width;
+  canvas.height = image.height;
+  ctx.drawImage(image, 0, 0);
+
+  const imageData = ctx.getImageData(0, 0, image.width, image.height);
+  const data = imageData.data;
+
+  let binaryMessage = stringToBinary(message) + "00000000"; // Add delimiter (null byte)
+  let messageIndex = 0;
+
+  // Loop through each pixel (4 bytes per pixel: RGBA)
+  for (
+    let i = 0;
+    i < data.length && messageIndex < binaryMessage.length;
+    i += 4
+  ) {
+    // Modify the least significant bit of each channel (R, G, B)
+    for (let j = 0; j < 3; j++) {
+      // Only R, G, B channels
+      const bit = binaryMessage[messageIndex];
+      data[i + j] = (data[i + j] & 0xfe) | parseInt(bit); // Set the LSB to the message bit
+      messageIndex++;
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+  return canvas.toDataURL(); // Return the encrypted image as a base64 string
+};
+
+// LSB Decryption Function
+const decryptImage = (image) => {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = image.width;
+  canvas.height = image.height;
+  ctx.drawImage(image, 0, 0);
+
+  const imageData = ctx.getImageData(0, 0, image.width, image.height);
+  const data = imageData.data;
+
+  let binaryMessage = "";
+
+  // Extract the least significant bit from each RGB channel
+  for (let i = 0; i < data.length; i += 4) {
+    for (let j = 0; j < 3; j++) {
+      // Only R, G, B channels
+      binaryMessage += data[i + j] & 1; // Get the LSB
+    }
+  }
+
+  // Find the delimiter (null byte) and slice the binaryMessage
+  const delimiterIndex = binaryMessage.indexOf("00000000");
+  if (delimiterIndex !== -1) {
+    binaryMessage = binaryMessage.slice(0, delimiterIndex); // Remove delimiter
+  }
+
+  return binaryToString(binaryMessage); // Convert binary back to string
+};
 
 export default function LSBSteganographyPage() {
-  const [plaintext, setPlaintext] = useState("");
-  const [ciphertextImage, setCiphertextImage] = useState(null);
+  const [mode, setMode] = useState("encrypt"); // "encrypt" or "decrypt"
+  const [message, setMessage] = useState("");
   const [file, setFile] = useState(null);
-  // eslint-disable-next-line no-unused-vars
   const [imagePreview, setImagePreview] = useState(null);
-  const [fileDetails, setFileDetails] = useState(null);
-  const [usePlaintext, setUsePlaintext] = useState(true);
+  const [encryptedImage, setEncryptedImage] = useState(null);
+  const [decryptedMessage, setDecryptedMessage] = useState("");
+  const [fileDetails, setFileDetails] = useState(null); // Store file details
 
-  // Handle file selection and preview
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result); // Preview the image
-    };
-    if (file) {
+    if (file && (file.type === "image/bmp" || file.type === "image/jpeg")) {
+      setFile(file);
+      const reader = new FileReader();
+      reader.onload = () => setImagePreview(reader.result);
+
+      // Set file details
       setFileDetails({
         name: file.name,
-        type: file.type,
         size: (file.size / 1024).toFixed(2) + " KB", // Convert size to KB
-        date: new Date(file.lastModified).toLocaleDateString(),
+        type: file.type,
       });
-      reader.readAsDataURL(file);
+
+      if (file) reader.readAsDataURL(file);
+    } else {
+      alert("Please upload a BMP or JPG file.");
     }
   };
 
-  // Handle encryption logic (LSB Steganography)
   const handleEncrypt = () => {
-    const formData = new FormData();
-    formData.append("file", file); // Attach the image file
-    if (usePlaintext) {
-      formData.append("plainText", plaintext); // Attach plaintext if selected
+    if (!file || !message) {
+      alert("Please upload an image and enter a message.");
+      return;
     }
 
-    // Call the backend to perform the LSB steganography encryption
-    axios
-      .post("XXXXXXXXXX", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-      .then((response) => {
-        setCiphertextImage(response.data.ciphertextImage); // Assuming the API returns the encrypted image
-      })
-      .catch((error) => {
-        console.error("There was an error encrypting the data!", error);
-      });
+    const img = new Image();
+    img.src = imagePreview;
+
+    img.onload = () => {
+      const encrypted = encryptImage(img, message);
+      setEncryptedImage(encrypted);
+    };
   };
 
-  // Handle decryption logic (LSB Steganography)
   const handleDecrypt = () => {
-    const formData = new FormData();
-    formData.append("file", file); // Attach the encrypted image file
+    if (!file) {
+      alert("Please upload an image to decrypt.");
+      return;
+    }
 
-    // Call the backend to decrypt the hidden message from the LSB encoded image
-    axios
-      .post("xxxxxxxxxxx", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-      .then((response) => {
-        setPlaintext(response.data.plaintext); // Assuming the API returns the decrypted plaintext
-      })
-      .catch((error) => {
-        console.error("There was an error decrypting the data!", error);
-      });
+    const img = new Image();
+    img.src = imagePreview;
+
+    img.onload = () => {
+      const decrypted = decryptImage(img);
+      setDecryptedMessage(decrypted);
+    };
   };
 
-  // Reset all fields
   const handleReset = () => {
-    setPlaintext("");
-    setCiphertextImage(null);
+    setMessage("");
     setFile(null);
     setImagePreview(null);
-    setFileDetails(null);
-    setUsePlaintext(true); // Reset to default option
+    setEncryptedImage(null);
+    setDecryptedMessage("");
+    setFileDetails(null); // Reset file details
+  };
+
+  const handleDownload = () => {
+    if (!encryptedImage) return;
+    const link = document.createElement("a");
+    link.href = encryptedImage;
+    link.download = "encrypted_image.png"; // You can change the file name
+    link.click();
   };
 
   return (
     <div className="font-poppins bg-gray-100 min-h-screen flex justify-center items-center py-10">
       <div className="bg-white w-full max-w-4xl p-8 rounded-lg shadow-2xl">
         <h1 className="text-center text-3xl font-bold text-[#001E56] mb-6">
-          LSB Steganography - Encrypt & Decrypt
+          LSB Steganography
         </h1>
 
-        <div className="space-y-8">
-          {/* Conditionally render Plaintext input */}
-          {usePlaintext && (
-            <div className="flex items-center justify-between">
+        {/* Mode Switch */}
+        <div className="flex justify-center mb-8">
+          <button
+            onClick={() => setMode("encrypt")}
+            className={`px-6 py-2 rounded-l-lg ${
+              mode === "encrypt" ? "bg-blue-600 text-white" : "bg-gray-300"
+            }`}>
+            Encrypt
+          </button>
+          <button
+            onClick={() => setMode("decrypt")}
+            className={`px-6 py-2 rounded-r-lg ${
+              mode === "decrypt" ? "bg-green-600 text-white" : "bg-gray-300"
+            }`}>
+            Decrypt
+          </button>
+        </div>
+
+        {/* Conditional Form */}
+        {mode === "encrypt" && (
+          <div className="space-y-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
               <label className="text-lg font-semibold w-full sm:w-1/3">
-                Plaintext
+                Masukkan pesan
               </label>
               <input
                 type="text"
                 className="w-full sm:w-2/3 border-2 border-gray-400 rounded-md p-3"
-                value={plaintext}
-                onChange={(e) => setPlaintext(e.target.value)}
+                placeholder="Masukkan pesan kamu"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
               />
             </div>
-          )}
 
-          {/* Plaintext input */}
-          <div className="flex items-center space-x-4 mt-6">
-            <label className="text-lg font-semibold">Masukkan Plaintext?</label>
-            <div className="flex items-center">
-              <input
-                type="radio"
-                id="usePlaintext"
-                name="plaintextOption"
-                checked={usePlaintext}
-                onChange={() => setUsePlaintext(true)}
-              />
-              <label className="ml-2 text-gray-700">Yes</label>
-            </div>
-            <div className="flex items-center">
-              <input
-                type="radio"
-                id="noPlaintext"
-                name="plaintextOption"
-                checked={!usePlaintext}
-                onChange={() => setUsePlaintext(false)}
-              />
-              <label className="ml-2 text-gray-700">No</label>
-            </div>
-          </div>
-
-          {/* File Upload */}
-          <div className="flex items-center justify-between">
-            <label className="text-lg font-semibold w-full sm:w-1/3">
-              Upload Image
-            </label>
-            <div className="w-full sm:w-2/3 border-2 border-gray-400 rounded-md p-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+              <label className="text-lg font-semibold w-full sm:w-1/3">
+                Upload Image
+              </label>
               <input
                 type="file"
-                className="w-full h-10 text-sm border-none"
+                className="w-full sm:w-2/3 border-2 border-gray-400 rounded-md p-3"
+                accept="image/bmp, image/jpeg" // Limit file types to BMP and JPG
                 onChange={handleFileChange}
               />
             </div>
-          </div>
 
-          {/* Action buttons */}
-          <div className="flex justify-between sm:flex-row gap-3 mt-6">
+            {fileDetails && (
+              <div className="mt-4">
+                <h2 className="text-md font-semibold text-[#001E56]">
+                  File Details:
+                </h2>
+                <p>
+                  <strong>Name:</strong> {fileDetails.name}
+                </p>
+                <p>
+                  <strong>Size:</strong> {fileDetails.size}
+                </p>
+                <p>
+                  <strong>Type:</strong> {fileDetails.type}
+                </p>
+              </div>
+            )}
+
             <button
               onClick={handleEncrypt}
-              className="bg-[#001E56] text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-300 w-full sm:w-auto">
-              Enkripsi
+              className="bg-[#001E56] text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-300 w-full">
+              Encrypt
             </button>
+
+            {encryptedImage && (
+              <div className="mt-8">
+                <h2 className="text-lg font-semibold text-[#001E56] mb-2">
+                  Encrypted Image
+                </h2>
+                <img
+                  src={encryptedImage}
+                  alt="Encrypted"
+                  className="max-w-full h-auto rounded-md"
+                />
+                <button
+                  onClick={handleDownload}
+                  className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+                  Download Encrypted Image
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {mode === "decrypt" && (
+          <div className="space-y-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+              <label className="text-lg font-semibold w-full sm:w-1/3">
+                Upload Image
+              </label>
+              <input
+                type="file"
+                className="w-full sm:w-2/3 border-2 border-gray-400 rounded-md p-3"
+                accept="image/bmp, image/jpeg" // Limit file types to BMP and JPG
+                onChange={handleFileChange}
+              />
+            </div>
+
+            {fileDetails && (
+              <div className="mt-4">
+                <h2 className="text-md font-semibold text-[#001E56]">
+                  File Details:
+                </h2>
+                <p>
+                  <strong>Name:</strong> {fileDetails.name}
+                </p>
+                <p>
+                  <strong>Size:</strong> {fileDetails.size}
+                </p>
+                <p>
+                  <strong>Type:</strong> {fileDetails.type}
+                </p>
+              </div>
+            )}
+
             <button
               onClick={handleDecrypt}
-              className="bg-[#4CAF50] text-white px-6 py-2 rounded-lg hover:bg-green-600 transition duration-300 w-full sm:w-auto mt-4 sm:mt-0">
-              Deskripsi
+              className="bg-[#4CAF50] text-white px-6 py-2 rounded-lg hover:bg-green-600 transition duration-300 w-full">
+              Decrypt
             </button>
-            <button
-              onClick={handleReset}
-              className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-800 transition duration-300 w-full sm:w-auto mt-4 sm:mt-0">
-              Reset
-            </button>
-          </div>
 
-          {/* Display encrypted image and file details */}
-          <div className="mt-8">
-            <div className="border-2 border-gray-300 p-4 rounded-lg shadow-md bg-[#106EBE]">
-              <label className="text-white text-lg font-semibold">
-                Encrypted Image
-              </label>
-              <div className="bg-gray-200 h-48 mt-2 flex items-center justify-center rounded-lg">
-                {ciphertextImage ? (
-                  <img
-                    src={ciphertextImage} // Assuming it's a URL or base64-encoded image
-                    alt="Encrypted"
-                    className="h-full object-cover rounded-md"
-                  />
-                ) : (
-                  <span className="text-gray-400">No encrypted image yet</span>
-                )}
+            {decryptedMessage && (
+              <div className="mt-8">
+                <h2 className="text-lg font-semibold text-[#001E56] mb-2">
+                  Decrypted Message
+                </h2>
+                <p className="text-lg text-gray-800">{decryptedMessage}</p>
               </div>
-
-              {/* Display file details */}
-              {fileDetails && (
-                <div className="mt-4 text-sm text-white">
-                  <p>
-                    <strong>Name:</strong> {fileDetails.name}
-                  </p>
-                  <p>
-                    <strong>Type:</strong> {fileDetails.type}
-                  </p>
-                  <p>
-                    <strong>Size:</strong> {fileDetails.size}
-                  </p>
-                  <p>
-                    <strong>Uploaded on:</strong> {fileDetails.date}
-                  </p>
-                </div>
-              )}
-
-              {/* Display decrypted plaintext */}
-              {plaintext && (
-                <div className="mt-4 text-sm text-white">
-                  <label className="text-white text-lg font-semibold">
-                    Decrypted Plaintext
-                  </label>
-                  <p>{plaintext}</p>
-                </div>
-              )}
-            </div>
+            )}
           </div>
-        </div>
+        )}
+
+        <button
+          onClick={handleReset}
+          className="mt-8 bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition duration-300 w-full">
+          Reset
+        </button>
       </div>
     </div>
   );

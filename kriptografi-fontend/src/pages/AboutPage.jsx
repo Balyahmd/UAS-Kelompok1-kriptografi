@@ -20,7 +20,7 @@ export default function AboutPage() {
           <tbody className="space-y-3">
             <tr>
               <td className="py-2">Rangga Krisna Putra</td>
-              <td className="py-2">21104410075</td>
+              <td className="py-2">21104410068</td>
             </tr>
             <tr>
               <td className="py-2">Nugroho Gusti Bintang Fajar</td>
@@ -28,7 +28,7 @@ export default function AboutPage() {
             </tr>
             <tr>
               <td className="py-2">Balya Ahmad Waffa</td>
-              <td className="py-2">21104410054</td>
+              <td className="py-2">21104410052</td>
             </tr>
             <tr>
               <td className="py-2">Eza Rafli Vernica Saputra</td>
